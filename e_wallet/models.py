@@ -1,63 +1,54 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
-class User(models.Model):
-    user_id = models.IntegerField(primary_key=True, auto_created=True)
-    name = models.CharField(max_length=40, default="Full Name", null=False, blank=False)
-    username = models.CharField(max_length=20, null=False, blank=False)
-    email = models.EmailField(null=False, blank=False)
-    password = models.CharField(max_length=20, default="")
-    phone_number = models.CharField(max_length=12, null=False, blank=False)
-    date = models.DateTimeField(auto_now=True, null=False, blank=False)
-    wallet = models.ForeignKey("Wallet", on_delete=models.CASCADE)
-    notification = models.OneToOneField("Notification", on_delete=models.CASCADE)
+# Create your models here.
+class User(AbstractUser):
+    email = models.EmailField(unique=True)
+    phone = models.CharField(unique=True, max_length=11)
+
+
+class Account(models.Model):
+    bank_name = models.CharField(max_length=235)
+    account_number = models.CharField(max_length=15)
+    amount = models.DecimalField(max_digits=11, decimal_places=2)
+
+
+class Card(models.Model):
+    CARD_TYPE = [
+        ('AMERICAN_EXPRESS', 'AMERICAN_EXPRESS'),
+        ('VISA', 'VISA'),
+        ('MASTERCARD', 'MASTERCARD'),
+        ('VERVE', 'VERVE'),
+    ]
+    card_number = models.CharField(max_length=16)
+    card_name = models.CharField(max_length=255)
+    cvv = models.CharField(max_length=3)
+    expiry_date = models.DateField(auto_created=True)
+    card_type = models.CharField(max_length=20, choices=CARD_TYPE)
+
+
+class Beneficiary(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
 
 
 class Transaction(models.Model):
     TRANSACTION_TYPE = [
-        ('SEND MONEY', 'WITHDRAW', 'BUY AIRTIME', 'BUY DATA', 'PAY BILL')
+        ('AIRTIME', 'AIRTIME'),
+        ('TV', 'TV'),
+        ('DATA', 'DATA'),
+        ('ELECTRICITY', 'ELECTRICITY'),
+        ('WATER', 'WATER'),
+        ('EDUCATION', 'EDUCATION')
     ]
-    TRANSACTION_STATUS = [
-        ('PENDING', 'SENT', 'FAILED')
-    ]
-    transaction_id = models.IntegerField(primary_key=True)
-    transaction_type = models.CharField(blank=False, null=False, choices=TRANSACTION_TYPE)
-    transaction_status = models.CharField(blank=False, null=False, choices=TRANSACTION_STATUS)
-    amount = models.DecimalField(blank=False, null=False)
-    date = models.DateTimeField(auto_now=True, null=False, blank=False)
-    wallet = models.ManyToOneRel("Wallet", on_delete=models.CASCADE, related_name="wallet")
-    notification = models.OneToOneField("Notification", on_delete=models.CASCADE)
-
-
-class CreditCard(models.Model):
-    card_id = models.IntegerField(primary_key=True)
-    credit_card_number = models.IntegerField(null=False, blank=False, max_length=20)
-    ccv = models.IntegerField(null=False, blank=False)
-    expiry_date = models.DateTimeField(null=False, blank=False)
-
-
-class Account(models.Model):
-    account_id = models.IntegerField(primary_key=True)
-    bank_name = models.CharField(max_length=20, null=False, blank=False)
-    account_name = models.CharField(User.name)
-    bank_number = models.CharField()
+    account = models.ForeignKey(Account, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=6, decimal_places=2)
+    date = models.DateTimeField(auto_now=True)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE)
 
 
 class Wallet(models.Model):
-    wallet_id = models.IntegerField(primary_key=True, auto_created=True)
-    balance = models.DecimalField(default=0, max_digits=7, decimal_places=2)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=12, decimal_places=2)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
-
-
-class Notification(models.Model):
-    notification_id = models.IntegerField(primary_key=True, auto_created=True)
-    message = models.CharField(max_length=200, null=True, blank=True)
-    time_stamp = models.DateTimeField(auto_now=True)
-
-
-class Admin(models.Model):
-    admin_id = models.IntegerField(primary_key=True, auto_created=True)
-    name = models.CharField(null=False, blank=False, max_length=200)
-    username = models.CharField(max_length=20, null=False, blank=False)
-    email = models.EmailField(null=False, blank=False)
-    password = models.CharField(max_length=20, default="")
+    card = models.OneToOneField(Card, on_delete=models.CASCADE)
