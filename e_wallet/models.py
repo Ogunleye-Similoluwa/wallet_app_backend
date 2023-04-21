@@ -52,3 +52,6 @@ class Wallet(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=2)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     card = models.OneToOneField(Card, on_delete=models.CASCADE)
+
+    # def __str__(self):
+    #     return f"{}"
